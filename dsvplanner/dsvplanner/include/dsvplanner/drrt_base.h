@@ -30,79 +30,79 @@ Hongbiao Zhu(hongbiaz@andrew.cmu.edu)
 
 using namespace Eigen;
 namespace dsvplanner_ns {
-struct Params {
-  ros::Publisher newTreePathPub_;
-  ros::Publisher remainingTreePathPub_;
-  ros::Publisher boundaryPub_;
-  ros::Publisher globalSelectedFrontierPub_;
-  ros::Publisher localSelectedFrontierPub_;
-  ros::Publisher nextGoalPub_;
-  ros::Publisher plantimePub_;
-  ros::Publisher randomSampledPointsPub_;
-  ros::Publisher shutdownSignalPub;
+    struct Params {
+        ros::Publisher newTreePathPub_;
+        ros::Publisher remainingTreePathPub_;
+        ros::Publisher boundaryPub_;
+        ros::Publisher globalSelectedFrontierPub_;
+        ros::Publisher localSelectedFrontierPub_;
+        ros::Publisher nextGoalPub_;
+        ros::Publisher plantimePub_;
+        ros::Publisher randomSampledPointsPub_;
+        ros::Publisher shutdownSignalPub;
 
-  double sensorPitch;
-  double sensorHorizontalView;
-  double sensorVerticalView;
-  double kVehicleHeight;
-  Eigen::Vector3d boundingBox;
-  Eigen::Vector3d localBoundary;
-  Eigen::Vector3d globalBoundary;
+        double sensorPitch;
+        double sensorHorizontalView;
+        double sensorVerticalView;
+        double kVehicleHeight;
+        Eigen::Vector3d boundingBox;
+        Eigen::Vector3d localBoundary;
+        Eigen::Vector3d globalBoundary;
 
-  double kGainFree;
-  double kGainOccupied;
-  double kGainUnknown;
-  double kGainRange;
-  double kGainRangeZMinus;
-  double kGainRangeZPlus;
-  double kZeroGain;
+        double kGainFree;
+        double kGainOccupied;
+        double kGainUnknown;
+        double kGainRange;
+        double kGainRangeZMinus;
+        double kGainRangeZPlus;
+        double kZeroGain;
 
-  double kExtensionRange;
-  double kMinextensionRange;
-  double kMaxExtensionAlongZ;
-  bool kExactRoot;
-  int kMinEffectiveGain;
-  int kGlobalExtraIterations;
-  int kCuttoffIterations;
-  int kVertexSize;
-  int kKeepTryingNum;
-  int kLoopCountThres;
+        double kExtensionRange;
+        double kMinextensionRange;
+        double kMaxExtensionAlongZ;
+        bool kExactRoot;
+        int kMinEffectiveGain;
+        int kGlobalExtraIterations;
+        int kCuttoffIterations;
+        int kVertexSize;
+        int kKeepTryingNum;
+        int kLoopCountThres;
 
-  double kMinXLocalBound;
-  double kMinYLocalBound;
-  double kMinZLocalBound;
-  double kMaxXLocalBound;
-  double kMaxYLocalBound;
-  double kMaxZLocalBound;
-  double kMinXGlobalBound;
-  double kMinYGlobalBound;
-  double kMinZGlobalBound;
-  double kMaxXGlobalBound;
-  double kMaxYGlobalBound;
-  double kMaxZGlobalBound;
+        double kMinXLocalBound;
+        double kMinYLocalBound;
+        double kMinZLocalBound;
+        double kMaxXLocalBound;
+        double kMaxYLocalBound;
+        double kMaxZLocalBound;
+        double kMinXGlobalBound;
+        double kMinYGlobalBound;
+        double kMinZGlobalBound;
+        double kMaxXGlobalBound;
+        double kMaxYGlobalBound;
+        double kMaxZGlobalBound;
 
-  double kTerrainVoxelSize;
-  int kTerrainVoxelWidth;
-  int kTerrainVoxelHalfWidth;
+        double kTerrainVoxelSize;
+        int kTerrainVoxelWidth;
+        int kTerrainVoxelHalfWidth;
 
-  double kRemainingNodeScaleSize;
-  double kRemainingBranchScaleSize;
-  double kNewNodeScaleSize;
-  double kNewBranchScaleSize;
+        double kRemainingNodeScaleSize;
+        double kRemainingBranchScaleSize;
+        double kNewNodeScaleSize;
+        double kNewBranchScaleSize;
 
-  std::string explorationFrame;
-};
+        std::string explorationFrame;
+    };
 
-class Node {
-public:
-  Node(){};
-  ~Node(){};
-  Vector3d state_;
-  Node *parent_;
-  std::vector<Node *> children_;
-  double gain_;
-  double distance_;
-};
+    class Node {
+        public:
+        Node(){};
+        ~Node(){};
+        Vector3d state_;
+        Node *parent_;
+        std::vector<Node *> children_;
+        double gain_;
+        double distance_;
+    };
 }
 
 #endif // DRRT_BASE_H_

@@ -36,7 +36,7 @@ namespace dsvplanner_ns {
         DualStateGraph *dual_state_graph_;
         DualStateFrontier *dual_state_frontier_;
         Drrt *drrt_;
-        OccupancyGrid *grid_;
+        OccupancyGrid *grid_;//车附近的栅格地图，以点云的形式存在
 
         /**
          * @brief 包含话题、服务初始化和参数设置
