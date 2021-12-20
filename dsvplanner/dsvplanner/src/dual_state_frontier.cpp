@@ -61,45 +61,44 @@ namespace dsvplanner_ns {
     }
 
     void DualStateFrontier::getUnknowPointcloudInBoundingBox(const StateVec &center, const StateVec &bounding_box_size) {
-    unknown_points_->clear();
-    local_frontier_->clear();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr local_frontier_temp = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
+        unknown_points_->clear();
+        local_frontier_->clear();
+        pcl::PointCloud<pcl::PointXYZ>::Ptr local_frontier_temp = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
 
-    const double epsilon = 0.001; // Small offset to not hit boundary of nodes.
-    StateVec epsilon_3d;
-    epsilon_3d.setConstant(epsilon);
+        const double epsilon = 0.001; // Small offset to not hit boundary of nodes.
+        StateVec epsilon_3d;
+        epsilon_3d.setConstant(epsilon);
 
-    // Determine correct center of voxel.
-    const StateVec center_corrected(kFrontierResolution * std::floor(center.x() / kFrontierResolution) + kFrontierResolution / 2.0,
-        kFrontierResolution * std::floor(center.y() / kFrontierResolution) + kFrontierResolution / 2.0, center.z());
-    StateVec bbx_min = -bounding_box_size / 2 - epsilon_3d;
-    StateVec bbx_max = bounding_box_size / 2 + epsilon_3d;
-
-    for (double x_position = bbx_min.x(); x_position <= bbx_max.x(); x_position += kFrontierResolution) {
-        for (double y_position = bbx_min.y(); y_position <= bbx_max.y(); y_position += kFrontierResolution) {
-        double x = center_corrected[0] + x_position;
-        double y = center_corrected[1] + y_position;
-        double z = getZvalue(x_position, y_position);
-        if (z >= 1000)
-            continue;
-        octomap::point3d point = octomap::point3d(x, y, z);
-        octomap::OcTreeKey key = manager_->octree_->coordToKey(point);
-        octomap::OcTreeNode *node = manager_->octree_->search(key);
-        if (node == NULL) {
-            unknown_points_->push_back(
-                pcl::PointXYZ(point.x(), point.y(), point.z()));
-            if (FrontierInBoundry(point) && frontierDetect(point)) {
-            local_frontier_temp->push_back(
-                pcl::PointXYZ(point.x(), point.y(), point.z()));
+        // Determine correct center of voxel.
+        //计算中center 在前沿点图 中对应的位置，和box对应的上下限
+        const StateVec center_corrected(kFrontierResolution * std::floor(center.x() / kFrontierResolution) + kFrontierResolution / 2.0,
+            kFrontierResolution * std::floor(center.y() / kFrontierResolution) + kFrontierResolution / 2.0, center.z());
+        StateVec bbx_min = -bounding_box_size / 2 - epsilon_3d;
+        StateVec bbx_max = bounding_box_size / 2 + epsilon_3d;
+        //遍历center周围 box中的每一个点，将八叉树中不存在的点加入到unknown_points_中，将符合要求的前沿点经降采样加入到local_frontier_中
+        for (double x_position = bbx_min.x(); x_position <= bbx_max.x(); x_position += kFrontierResolution) {
+            for (double y_position = bbx_min.y(); y_position <= bbx_max.y(); y_position += kFrontierResolution) {
+                double x = center_corrected[0] + x_position;
+                double y = center_corrected[1] + y_position;
+                double z = getZvalue(x_position, y_position);
+                if (z >= 1000)
+                    continue;
+                octomap::point3d point = octomap::point3d(x, y, z);
+                octomap::OcTreeKey key = manager_->octree_->coordToKey(point);
+                octomap::OcTreeNode *node = manager_->octree_->search(key);
+                if (node == NULL) {
+                    unknown_points_->push_back(pcl::PointXYZ(point.x(), point.y(), point.z()));
+                    if (FrontierInBoundry(point) && frontierDetect(point)) {
+                        local_frontier_temp->push_back(pcl::PointXYZ(point.x(), point.y(), point.z()));
+                    }
+                }
             }
         }
-        }
+        pcl::VoxelGrid<pcl::PointXYZ> point_ds;
+        point_ds.setLeafSize(kFrontierFilterSize, kFrontierFilterSize, kFrontierFilterSize);
+        point_ds.setInputCloud(local_frontier_temp);
+        point_ds.filter(*local_frontier_);
     }
-    pcl::VoxelGrid<pcl::PointXYZ> point_ds;
-    point_ds.setLeafSize(kFrontierFilterSize, kFrontierFilterSize, kFrontierFilterSize);
-    point_ds.setInputCloud(local_frontier_temp);
-    point_ds.filter(*local_frontier_);
-}
 
     bool DualStateFrontier::frontierDetect(octomap::point3d point) const {
         const double resolution = manager_->octree_->getResolution();
@@ -108,9 +107,10 @@ namespace dsvplanner_ns {
         bool effectiveUnknown = false;
         int unknowCount = 0;
         octomap::OcTreeNode *node_inside;
-        octomap::OcTreeNode *node_outside;
+        octomap::OcTreeNode *node_outside;//outside似乎没用到
         octomap::OcTreeKey key_inside, key_outside;
         octomap::point3d surround_point_inside, surround_point_outside;
+        //判断yNegative（y向-方向一个分辨率）的八叉树情况
         surround_point_inside.x() = point.x();
         surround_point_inside.y() = point.y() - resolution;
         surround_point_inside.z() = point.z();
@@ -179,8 +179,8 @@ namespace dsvplanner_ns {
         } else if (node_inside == NULL) {
             unknowCount++;
         }
-        effectiveFree = xPositive || xNegative || yPositive || yNegative;
-        effectiveUnknown = unknowCount >= kEffectiveUnknownNumAroundFrontier;
+        effectiveFree = xPositive || xNegative || yPositive || yNegative;//在八叉树地图中 前后左右四个方向存在未被占用的点
+        effectiveUnknown = unknowCount >= kEffectiveUnknownNumAroundFrontier;//在八叉树地图中 前后左右四个方向的未知区域占比满足阈值
         return (effectiveFree && effectiveUnknown);
     }
 
@@ -236,6 +236,7 @@ namespace dsvplanner_ns {
         check_point.z = point[2];
         std::vector<int> pointSearchInd;
         std::vector<float> pointSearchDist;
+        //在图规划的定点集中 存在 点 满足与check_point点 1较近2在可视范围内 3 点间没有障碍物（八叉树和栅格）
         if (graphPoints_->points.size() > 0) {
             kdtree_->setInputCloud(graphPoints_);
             kdtree_->radiusSearch(check_point, kSearchRadius, pointSearchInd, pointSearchDist);
@@ -244,11 +245,11 @@ namespace dsvplanner_ns {
                 StateVec dir = point - node_point;
                 // Skip if distance is too large
                 double rangeSq = pow(kSearchRadius, 2.0);
-                if (dir.transpose().dot(dir) > rangeSq) {
+                if (dir.transpose().dot(dir) > rangeSq) {//两点间的距离在kdTree搜索半径内
                     continue;
                 }
                 bool insideAFieldOfView = false;
-                if (fabs(dir[2] < sqrt(dir[0] * dir[0] + dir[1] * dir[1]) * tan(M_PI * kSensorVerticalView / 360))) {
+                if (fabs(dir[2] < sqrt(dir[0] * dir[0] + dir[1] * dir[1]) * tan(M_PI * kSensorVerticalView / 360))) {//两点夹角在可视范围内
                     insideAFieldOfView = true;
                 }
                 if (!insideAFieldOfView) {
@@ -296,9 +297,10 @@ namespace dsvplanner_ns {
             checkedPoint.y() = local_frontier_->points[i].y;
             checkedPoint.z() = local_frontier_->points[i].z;
 
-            if (!(kEliminateFrontiersAroundRobots && inSensorRangeofRobot(checkedPoint)) &&
-                    ((manager_->CellStatus::kOccupied != manager_->getVisibility(center, checkedPoint, false) &&
-                    !grid_->collisionCheckByTerrainWithVector(center, checkedPoint)) || (!planner_status_ && inSensorRangeofGraphPoints(checkedPoint)))) {
+            if (!(kEliminateFrontiersAroundRobots && inSensorRangeofRobot(checkedPoint)) &&//FIXME：机器人不能直接到达该边沿点
+                    ((manager_->CellStatus::kOccupied != manager_->getVisibility(center, checkedPoint, false) &&//八叉树可以center从达到边沿点
+                    !grid_->collisionCheckByTerrainWithVector(center, checkedPoint))//栅格可以center从达到边沿点
+                     || (!planner_status_ && inSensorRangeofGraphPoints(checkedPoint)))) {//planer完成且 图规划中存在可到达边沿点的点
                 local_frontier_pcl_->points.push_back(local_frontier_->points[i]);
                 global_frontier_->points.push_back(local_frontier_->points[i]);
             }
@@ -318,6 +320,7 @@ namespace dsvplanner_ns {
         octomap::OcTreeKey key;
         octomap::point3d point;
         StateVec checkedPoint;
+        //将全局前沿点中，不是被清了的前沿点，且符合规则的 前沿点加入到global_frontier_pcl_
         for (int i = 0; i < size; i++) {
             point.x() = global_frontier_->points[i].x;
             point.y() = global_frontier_->points[i].y;
@@ -334,6 +337,7 @@ namespace dsvplanner_ns {
                 global_frontier_pcl_->points.push_back(global_frontier_->points[i]);
             }
         }
+        //global_frontier_pcl_中的点进行将采样处理，并存入到global_frontier_中
         global_frontier_->clear();
         pcl::VoxelGrid<pcl::PointXYZ> point_ds_;
         point_ds_.setLeafSize(kFrontierFilterSize, kFrontierFilterSize, kFrontierFilterSize);
@@ -342,26 +346,26 @@ namespace dsvplanner_ns {
     }
 
     void DualStateFrontier::globalFrontiersNeighbourCheck() {
-    global_frontier_pcl_->clear();
+        global_frontier_pcl_->clear();
 
-    int size = global_frontier_->points.size();
-    pcl::PointXYZ p1;
-    std::vector<int> pointSearchInd;
-    std::vector<float> pointSearchDist;
-    if (size > 0) {
-        global_frontiers_kdtree_->setInputCloud(global_frontier_);
-        for (int i = 0; i < size; i++) {
-            p1 = global_frontier_->points[i];
-            pointSearchInd.clear();
-            pointSearchDist.clear();
-            global_frontiers_kdtree_->radiusSearch(p1, kFrontierNeighbourSearchRadius, pointSearchInd, pointSearchDist);
-            if (pointSearchInd.size() > 1)
-                global_frontier_pcl_->points.push_back(p1);
+        int size = global_frontier_->points.size();
+        pcl::PointXYZ p1;
+        std::vector<int> pointSearchInd;
+        std::vector<float> pointSearchDist;
+        if (size > 0) {
+            global_frontiers_kdtree_->setInputCloud(global_frontier_);
+            for (int i = 0; i < size; i++) {
+                p1 = global_frontier_->points[i];
+                pointSearchInd.clear();
+                pointSearchDist.clear();
+                global_frontiers_kdtree_->radiusSearch(p1, kFrontierNeighbourSearchRadius, pointSearchInd, pointSearchDist);
+                if (pointSearchInd.size() > 1)
+                    global_frontier_pcl_->points.push_back(p1);
+            }
         }
+        global_frontier_->clear();
+        *global_frontier_ = *global_frontier_pcl_;
     }
-    global_frontier_->clear();
-    *global_frontier_ = *global_frontier_pcl_;
-}
 
     void DualStateFrontier::cleanAllUselessFrontiers() {
         global_frontier_->clear();
@@ -378,17 +382,17 @@ namespace dsvplanner_ns {
     }
 
     void DualStateFrontier::publishFrontiers() {
-    sensor_msgs::PointCloud2 unknown_pcl, local_frontier_pcl, global_frontier_pcl;
-    pcl::toROSMsg(*unknown_points_, unknown_pcl);
-    pcl::toROSMsg(*global_frontier_, global_frontier_pcl);
-    pcl::toROSMsg(*local_frontier_, local_frontier_pcl);
-    unknown_pcl.header.frame_id = world_frame_id_;
-    global_frontier_pcl.header.frame_id = world_frame_id_;
-    local_frontier_pcl.header.frame_id = world_frame_id_;
-    unknown_points_pub_.publish(unknown_pcl);
-    global_frontier_points_pub_.publish(global_frontier_pcl);
-    local_frontier_points_pub_.publish(local_frontier_pcl);
-}
+        sensor_msgs::PointCloud2 unknown_pcl, local_frontier_pcl, global_frontier_pcl;
+        pcl::toROSMsg(*unknown_points_, unknown_pcl);
+        pcl::toROSMsg(*global_frontier_, global_frontier_pcl);
+        pcl::toROSMsg(*local_frontier_, local_frontier_pcl);
+        unknown_pcl.header.frame_id = world_frame_id_;
+        global_frontier_pcl.header.frame_id = world_frame_id_;
+        local_frontier_pcl.header.frame_id = world_frame_id_;
+        unknown_points_pub_.publish(unknown_pcl);
+        global_frontier_points_pub_.publish(global_frontier_pcl);
+        local_frontier_points_pub_.publish(local_frontier_pcl);
+    }
 
     void DualStateFrontier::terrainCloudAndOdomCallback(const nav_msgs::Odometry::ConstPtr &odom_msg, const sensor_msgs::PointCloud2::ConstPtr &terrain_msg) {
         robot_position_[0] = odom_msg->pose.pose.position.x;
@@ -444,12 +448,14 @@ namespace dsvplanner_ns {
             if (indY < 0)
                 indY = 0;
             int indVoxel = kTerrainVoxelWidth * indX + indY;
-
+            //更新体素内的最低点个和最高点
             terrain_voxel_points_num_[indVoxel]++;
             if (point.z < terrain_voxel_min_elev_[indVoxel])
                 terrain_voxel_min_elev_[indVoxel] = point.z;
             if (point.z > terrain_voxel_max_elev_[indVoxel])
                 terrain_voxel_max_elev_[indVoxel] = point.z;
+            
+            //TODO（原因？）：邻近点的互相补充（最低点的进一步更新）
             for (int dX = -1; dX <= 1; dX = dX + 2) {
                 for (int dY = -1; dY <= 1; dY = dY + 2) {
                     if (indX + dX >= 0 && indX + dX < kTerrainVoxelWidth && indY + dY >= 0 && indY + dY < kTerrainVoxelWidth) {
@@ -497,18 +503,18 @@ namespace dsvplanner_ns {
 
         pcl::PointXYZI point;
         if (terrain_voxel_points_num_[0] <= 0) {
-            terrain_voxel_elev_[0] = robot_position_[2] - kVehicleHeight;
+            terrain_voxel_elev_[0] = robot_position_[2] - kVehicleHeight;//当前地面的高度
         }
         for (int i = 1; i < kTerrainVoxelWidth * kTerrainVoxelWidth; i++) {
             if (terrain_voxel_points_num_[i] <= 0) {
-                int indX = int(i / kTerrainVoxelWidth);
+                int indX = int(i / kTerrainVoxelWidth);//体素坐标
                 int indY = i % kTerrainVoxelWidth;
                 point.x = (indX - kTerrainVoxelHalfWidth) * kTerrainVoxelSize - kTerrainVoxelSize / 2 + robot_position_[0];
                 point.y = (indY - kTerrainVoxelHalfWidth) * kTerrainVoxelSize - kTerrainVoxelSize / 2 + robot_position_[1];
                 point.z = 0;
 
                 if (terrain_elev_cloud_->points.size() > 0) {
-                    if (kdtree.nearestKSearch(point, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
+                    if (kdtree.nearestKSearch(point, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {//寻找最近点
                         point.intensity = terrain_elev_cloud_->points[pointIdxNKNSearch[0]].intensity;
                         terrain_voxel_elev_[i] = point.intensity;
                     }

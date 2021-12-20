@@ -27,23 +27,23 @@ namespace dsvplanner_ns {
             ros::NodeHandle nh_private_;
 
             // ROS subscribers
-            ros::Subscriber key_pose_sub_;
-            ros::Subscriber graph_planner_path_sub_;
-            ros::Subscriber graph_planner_status_sub_;
+            ros::Subscriber key_pose_sub_;//订阅关键点话题
+            ros::Subscriber graph_planner_path_sub_;//订阅图规划路径的话题
+            ros::Subscriber graph_planner_status_sub_;//订阅图规划状态的话题
 
             // ROS publishers
-            ros::Publisher local_graph_pub_;
-            ros::Publisher global_graph_pub_;
-            ros::Publisher graph_points_pub_;
+            ros::Publisher local_graph_pub_;//发布局部地图的话题
+            ros::Publisher global_graph_pub_;//发布全局第地图的话题
+            ros::Publisher graph_points_pub_;//发布图点的话题
 
             // String constants
             std::string world_frame_id_;
-            std::string pub_local_graph_topic_;
-            std::string pub_global_graph_topic_;
-            std::string pub_global_points_topic_;
-            std::string sub_keypose_topic_;
-            std::string sub_path_topic_;
-            std::string sub_graph_planner_status_topic_;
+            std::string pub_local_graph_topic_;//发布局部地图的话题名
+            std::string pub_global_graph_topic_;//发布全局第地图的话题名
+            std::string pub_global_points_topic_;//发布图点的话题名
+            std::string sub_keypose_topic_;//订阅关键点的话题名
+            std::string sub_path_topic_;//订阅图规划路径的话题名
+            std::string sub_graph_planner_status_topic_;//订阅图规划状态的话题名
 
             // Constants
             bool kCropPathWithTerrain;
@@ -66,17 +66,17 @@ namespace dsvplanner_ns {
             Eigen::Vector3d robot_bounding;
 
             // Variables
-            Eigen::Vector3d explore_direction_;
-            geometry_msgs::Point robot_pos_;
-            geometry_msgs::Pose tempvertex_;
-            graph_utils::TopologicalGraph global_graph_;
-            graph_utils::TopologicalGraph local_graph_;
-            graph_utils::TopologicalGraph pruned_graph_;
-            graph_planner::GraphPlannerStatus graph_planner_status_;
+            Eigen::Vector3d explore_direction_;//探索的方向
+            geometry_msgs::Point robot_pos_;//机器人位置
+            geometry_msgs::Pose tempvertex_;//机器人临时姿态
+            graph_utils::TopologicalGraph global_graph_;//全局图
+            graph_utils::TopologicalGraph local_graph_;//局部图
+            graph_utils::TopologicalGraph pruned_graph_;//TODO:图
+            graph_planner::GraphPlannerStatus graph_planner_status_;//图规划的状态 0：关闭 1：正在进行
             pcl::PointCloud<pcl::PointXYZ>::Ptr graph_point_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
             std::vector<int> gainID_;
-            volumetric_mapping::OctomapManager *manager_;
-            OccupancyGrid *grid_;
+            volumetric_mapping::OctomapManager *manager_;//八叉树地图
+            OccupancyGrid *grid_;//栅格地图
 
             bool planner_status_; // false means local plan and true means global plan
             int track_localvertex_idx_;

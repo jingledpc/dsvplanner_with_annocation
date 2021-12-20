@@ -32,7 +32,7 @@ namespace dsvplanner_ns {
         ros::ServiceServer cleanFrontierService_;
 
         Params params_;
-        volumetric_mapping::OctomapManager *manager_;
+        volumetric_mapping::OctomapManager *manager_;//八叉树地图
         DualStateGraph *dual_state_graph_;
         DualStateFrontier *dual_state_frontier_;
         Drrt *drrt_;

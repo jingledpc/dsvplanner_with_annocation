@@ -30,6 +30,10 @@ namespace dsvplanner_ns {
         typedef std::shared_ptr<OccupancyGrid> Ptr;
 
         public:
+        
+            /**
+             * @brief 占有地图
+            */
             OccupancyGrid(const ros::NodeHandle &nh, const ros::NodeHandle &nh_private);
             ~OccupancyGrid();
 

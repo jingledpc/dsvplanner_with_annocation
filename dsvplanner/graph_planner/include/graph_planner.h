@@ -67,6 +67,13 @@ class graph_planner_ns::GraphPlanner {
         std::string world_frame_id_;
         std::string sub_odometry_topic_;
         std::string sub_terrain_topic_;
+        ros::NodeHandle nh_;
+
+        // ROS subscribers
+        ros::Subscriber odometry_sub_;
+        ros::Subscriber terrain_sub_;
+        ros::Subscriber graph_sub_;
+        ros::Subscriber graph_planner_command_sub_;
         std::string sub_graph_topic_;
         std::string graph_planner_command_topic_;
         std::string graph_planner_status_topic_;
@@ -90,22 +97,16 @@ class graph_planner_ns::GraphPlanner {
         // Variables
         graph_planner::GraphPlannerCommand graph_planner_command_; // received command
         graph_utils::TopologicalGraph planned_graph_; // the received graph that can be palnned path in
-        geometry_msgs::PointStamped waypoint_; // goal waypoint being published by
-                                                // this node (if in mode IN_CONTROL)
+        geometry_msgs::PointStamped waypoint_; // goal waypoint being published by this node (if in mode IN_CONTROL)
         geometry_msgs::Point robot_pos_;       // current robot position
         pcl::PointCloud<pcl::PointXYZI>::Ptr terrain_point_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>());
         pcl::PointCloud<pcl::PointXYZI>::Ptr terrain_point_crop_ = pcl::PointCloud<pcl::PointXYZI>::Ptr(new pcl::PointCloud<pcl::PointXYZI>());
-        std::vector<geometry_msgs::Point> planned_path_; // only used for debugging --
-                                                        // the waypoint_ is what is
-                                                        // actually
-                                                        // output
+        std::vector<geometry_msgs::Point> planned_path_; // only used for debugging -- the waypoint_ is what is actually output
         double robot_yaw_;                               // current robot yaw
         bool in_progress_ = false; // current graph planner status
         bool wrong_id_ = false;
         int backTraceCount_ = 0;
-        int previous_shortest_path_size_ = 100000; // the size of the previous planned
-                                                    // path. used to avoid moving back
-                                                    // and forth in some cases
+        int previous_shortest_path_size_ = 100000; // the size of the previous planned path. used to avoid moving back and forth in some cases
         int previous_vertex_id_; // the id of the previous planned goal vertex
 
         // Callbacks
