@@ -41,8 +41,18 @@ namespace misc_utils_ns{
     template <class CloudType> void KeyposeToMap(CloudType & cloud, const nav_msgs::Odometry::ConstPtr & keypose);
     double PointXYDist(const geometry_msgs::Point &pnt1, const geometry_msgs::Point &pnt2);
     double PointXYDist(const PCLPointType &pnt1, const PCLPointType &pnt2);
-    template <class P1, class P2> double PointXYDist(const P1 & pnt1, const P2 & pnt2){return sqrt(pow((pnt1.x - pnt2.x), 2) + pow((pnt1.y - pnt2.y), 2));}
-    template <class P1, class P2> double PointXYZDist(const P1 & pnt1, const P2 & pnt2){return sqrt(pow((pnt1.x - pnt2.x), 2) + pow((pnt1.y - pnt2.y), 2) + pow((pnt1.z - pnt2.z), 2));}
+    /**
+     * @brief 返回两点间的距离（模板函数，二维点）
+    */
+    template <class P1, class P2> double PointXYDist(const P1 & pnt1, const P2 & pnt2){
+        return sqrt(pow((pnt1.x - pnt2.x), 2) + pow((pnt1.y - pnt2.y), 2));
+    }
+    /**
+     * @brief 返回两点间的距离（模板函数，三维点）
+    */
+    template <class P1, class P2> double PointXYZDist(const P1 & pnt1, const P2 & pnt2){
+        return sqrt(pow((pnt1.x - pnt2.x), 2) + pow((pnt1.y - pnt2.y), 2) + pow((pnt1.z - pnt2.z), 2));
+    }
     double PointAngle(const geometry_msgs::Point& pnt, const geometry_msgs::Point& robot_pos);
     double PointAngle(const PCLPointType& pnt, const geometry_msgs::Point& robot_pos);
     bool LineSegIntersect(const geometry_msgs::Point& p1, const geometry_msgs::Point& q1, const geometry_msgs::Point& p2, const geometry_msgs::Point& q2);
